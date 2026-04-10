@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alextools"
+version = "0.1.0"
+description = "Small CLI utilities for day-to-day efficiency"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Alex" }]
+
+[project.scripts]
+alextools = "alextools.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
