@@ -1,10 +1,11 @@
 # alextools
 
-Small CLI utilities for day-to-day efficiency.
-
 [简体中文](README_ZH.md)
 
-## Install
+**alextools** is a small toolbox: **CLI** utilities (`parallel-pack`, `parallel-unpack`) and **Python** helpers (`otsl2html`, `html2otsl` for OTSL/HTML table conversion). Wall-clock benchmark (`tar -czf` vs `parallel-pack`): [docs/parallel_pack_benchmark.md](docs/parallel_pack_benchmark.md).
+
+<details>
+<summary>Installation</summary>
 
 ```bash
 cd alextools
@@ -13,14 +14,36 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
-## Commands
+Installs the `alextools` command and Python package (including `beautifulsoup4` for HTML parsing).
 
-Sample wall-clock benchmark (`tar -czf` vs `parallel-pack`): [docs/parallel_pack_benchmark.md](docs/parallel_pack_benchmark.md).
-
-### `parallel-pack`
+</details>
 
 <details>
-<summary>Usage, flags, and requirements</summary>
+<summary>OTSL ↔ HTML (Python API)</summary>
+
+```python
+from alextools import otsl2html, html2otsl
+
+html_fragment = otsl2html("<fcel>A<fcel>B<nl><fcel>C<fcel>D<nl>")
+otsl = html2otsl("<table><tr><td>A</td><td>B</td></tr></table>")
+```
+
+- `otsl2html` returns a `<table>...</table>` fragment (no `<html>` wrapper).
+- `html2otsl` reads the first `<table>` in the string; it returns `""` if none is found.
+
+**Verify conversions** (editable install + dev extras for `pytest`, verbose case names):
+
+```bash
+pip install -e ".[dev]"
+pytest -v
+```
+
+OTSL tests assert a strict round-trip: `html2otsl(otsl2html(s)) == s`. Additional tests cover HTML tables without styling.
+
+</details>
+
+<details>
+<summary>CLI: <code>parallel-pack</code></summary>
 
 Parallel **gzip** tar for each directory at a chosen **depth** under `root`, then merge layers with **uncompressed** `tar`, and finally one top-level archive. **Depth 0** means a normal single `tar.gz` of the whole tree (no parallelism).
 
@@ -36,16 +59,14 @@ alextools parallel-pack /path/to/tree -o out.tar -d 2 -j 16
 - **`--workdir`**: staging directory (default: temporary, deleted unless **`--keep-workdir`**).
 - **`--dry-run`**: print `tar`/`pigz` commands only.
 
-**Extract:** use **`parallel-unpack`** (below) with the **same `-d`**, or manually unpack outer → `bundle.tar` → `.tar.gz` inward.
+**Extract:** use **`parallel-unpack`** with the **same `-d`**, or manually unpack outer → `bundle.tar` → `.tar.gz` inward.
 
 **Requirements:** `tar` on `PATH`; optional `pigz` for `--pigz`.
 
 </details>
 
-### `parallel-unpack`
-
 <details>
-<summary>Usage and flags</summary>
+<summary>CLI: <code>parallel-unpack</code></summary>
 
 Restore a tree produced by `parallel-pack` **with the same `--depth`** you used when packing. By default removes intermediate `bundle.tar` files and gzip-tar `*.tar.gz` created by the tool (files named `.tar.gz` that are not valid gzip-tars are left alone).
 

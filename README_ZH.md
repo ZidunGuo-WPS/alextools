@@ -1,10 +1,11 @@
 # alextools
 
-日常用的小型命令行工具集。
-
 [English](README.md)
 
-## 安装
+**alextools** 是一个小型工具箱：**命令行**（`parallel-pack`、`parallel-unpack`）与 **Python**（表格 OTSL / HTML 互转：`otsl2html`、`html2otsl`）。墙钟对比（`tar -czf` 与 `parallel-pack`）：[docs/parallel_pack_benchmark.md](docs/parallel_pack_benchmark.md)。
+
+<details>
+<summary>安装</summary>
 
 ```bash
 cd alextools
@@ -13,39 +14,59 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
 ```
 
-## 命令
+会安装 `alextools` 命令与 Python 包（含用于解析 HTML 的 `beautifulsoup4`）。
 
-`tar -czf` 与 `parallel-pack` 墙钟耗时对比（实测）：[docs/parallel_pack_benchmark.md](docs/parallel_pack_benchmark.md)。
-
-### `parallel-pack`
+</details>
 
 <details>
-<summary>用法、参数与依赖</summary>
+<summary>OTSL ↔ HTML（Python API）</summary>
 
-在 `root` 下，先按指定 **深度** 对该深度上的每个子目录**并行**各自打包成 **`.tar.gz`**（也就是 tar 归档后再做 gzip 压缩，俗称 tar.gz）；再用**未压缩**的 `tar` 把这些结果逐层包进更大的 tar，得到最外层归档。**深度 0** 表示整棵树只打一个普通的 `tar.gz`，不做分层并行。
+```python
+from alextools import otsl2html, html2otsl
+
+html_fragment = otsl2html("<fcel>A<fcel>B<nl><fcel>C<fcel>D<nl>")
+otsl = html2otsl("<table><tr><td>A</td><td>B</td></tr></table>")
+```
+
+- `otsl2html`：返回 `<table>...</table>` 片段（不含 `<html>` 外壳）。
+- `html2otsl`：解析字符串中的第一个 `<table>`；找不到表时返回 `""`。
+
+**验证转换**（可编辑安装 + 开发依赖以使用 `pytest`，`-v` 逐条打印用例名）：
+
+```bash
+pip install -e ".[dev]"
+pytest -v
+```
+
+OTSL 用例检查严格往返：`html2otsl(otsl2html(s)) == s`（字符串完全一致）。另有针对无样式 HTML 表格的测试。
+
+</details>
+
+<details>
+<summary>命令行：<code>parallel-pack</code></summary>
+
+在 `root` 下，先按指定 **深度** 对该深度上的每个子目录**并行**各自打包成 **`.tar.gz`**（tar 后再 gzip）；再用**未压缩**的 `tar` 逐层合并，得到最外层归档。**深度 0** 表示整棵树只打一个普通的 `tar.gz`，不做分层并行。
 
 ```bash
 alextools parallel-pack /path/to/tree -o out.tar -d 2 -j 16
 ```
 
 - **深度**：从 `root` 起算路径段数：`root` = 0，`root/a` = 1，`root/a/b` = 2。
-- **`-d N`（N ≥ 1）**：深度 **N** 上的每个目录各自打成 `.tar.gz`，并行进程数由 `-j` 控制；然后深度 N−1 上的每个目录得到包含这些 `.tar.gz` 的 `bundle.tar`，依此类推，直到 `-o` 指定的最终归档。
+- **`-d N`（N ≥ 1）**：深度 **N** 上的每个目录各自打成 `.tar.gz`，并行进程数由 `-j` 控制；深度 N−1 上得到包含这些 `.tar.gz` 的 `bundle.tar`，依此类推，直到 `-o` 指定的最终归档。
 - **`-o`**：输出路径。默认最外层是 **`.tar`（不压缩）**，避免对已 gzip 的内容再压一层。若要最外层也是 **`.tar.gz`**，使用 **`--final-gzip`**。
-- **`--pigz`**：叶子归档用 `pigz` 压缩（服务器需安装 `pigz`）。**`--pigz-threads`** 指定每个叶子进程的线程数。
+- **`--pigz`**：叶子归档用 `pigz`（需安装 `pigz`）。**`--pigz-threads`** 指定每个叶子进程的线程数。
 - **`--exclude PATTERN`**：原样传给 `tar`（可重复），例如 `.git` 或 `__pycache__`。
 - **`--workdir`**：中间工作目录（默认临时目录，除非 **`--keep-workdir`** 否则结束后删除）。
 - **`--dry-run`**：只打印将要执行的 `tar`/`pigz` 命令。
 
-**解压：** 使用下面的 **`parallel-unpack`**，**`-d` 与打包时相同**；或手动从最外层起，依次解开 `bundle.tar`、内层 `.tar.gz`。
+**解压：** 使用 **`parallel-unpack`**，**`-d` 与打包时相同**；或手动从最外层起依次解开 `bundle.tar`、内层 `.tar.gz`。
 
 **依赖：** `PATH` 上需有 `tar`；若使用 **`--pigz`**，需另行安装 `pigz`。
 
 </details>
 
-### `parallel-unpack`
-
 <details>
-<summary>用法与参数</summary>
+<summary>命令行：<code>parallel-unpack</code></summary>
 
 还原由 `parallel-pack` 生成的目录树，**`--depth` 必须与打包时一致**。默认会删除中间的 `bundle.tar` 以及本工具生成的 **gzip 压缩 tar**（`*.tar.gz`）；若某文件虽以 `.tar.gz` 命名但不是合法的 gzip-tar，则不会动它。
 
