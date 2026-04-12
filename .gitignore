@@ -7,3 +7,6 @@ build/
 .pytest_cache/
 _test_tree/
 _test_out/
+experiments/
+# Local datasets under experiment/ (notebooks & code stay tracked)
+experiment/**/data/
