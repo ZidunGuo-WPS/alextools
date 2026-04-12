@@ -2,6 +2,8 @@
 
 Small CLI utilities for day-to-day efficiency.
 
+[简体中文](README_ZH.md)
+
 ## Install
 
 ```bash
@@ -13,7 +15,12 @@ pip install -e .
 
 ## Commands
 
+Sample wall-clock benchmark (`tar -czf` vs `parallel-pack`): [docs/parallel_pack_benchmark.md](docs/parallel_pack_benchmark.md).
+
 ### `parallel-pack`
+
+<details>
+<summary>Usage, flags, and requirements</summary>
 
 Parallel **gzip** tar for each directory at a chosen **depth** under `root`, then merge layers with **uncompressed** `tar`, and finally one top-level archive. **Depth 0** means a normal single `tar.gz` of the whole tree (no parallelism).
 
@@ -33,7 +40,12 @@ alextools parallel-pack /path/to/tree -o out.tar -d 2 -j 16
 
 **Requirements:** `tar` on `PATH`; optional `pigz` for `--pigz`.
 
+</details>
+
 ### `parallel-unpack`
+
+<details>
+<summary>Usage and flags</summary>
 
 Restore a tree produced by `parallel-pack` **with the same `--depth`** you used when packing. By default removes intermediate `bundle.tar` files and gzip-tar `*.tar.gz` created by the tool (files named `.tar.gz` that are not valid gzip-tars are left alone).
 
@@ -47,6 +59,8 @@ alextools parallel-unpack whole.tar.gz -o ./restored -d 0
 - **`--final-gzip` / `--no-final-gzip`**: force outer layer gzip on/off (default: infer from extension).
 - **`--keep-archives`**: do not delete `bundle.tar` / `.tar.gz` after extracting them.
 - **`--dry-run`**: print planned commands (for depth ≥ 1 the output tree is not read unless you already extracted the outer archive).
+
+</details>
 
 ## License
 
